@@ -1,0 +1,12 @@
+{
+  "name": "cadcraft-addon-notes",
+  "private": true,
+  "type": "module",
+  "description": "A template CadCraft add-on.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "node tools/addon-test.mjs",
+    "pack": "node tools/addon-pack.mjs"
+  },
+  "engines": { "node": ">=20" }
+}

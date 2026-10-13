@@ -1,0 +1,13 @@
+{
+  "id": "com.example.notes",
+  "name": "Notes",
+  "version": "0.1.0",
+  "apps": ["cadcraft"],
+  "api": "1.0",
+  "license": "Apache-2.0",
+  "entry": "./main.js",
+  "permissions": ["commands", "toolbar", "objects"],
+  "description": "Numbered note bubbles you can drag and renumber. A template: copy it and make it yours.",
+  "author": "Your name",
+  "lang": "./lang/"
+}

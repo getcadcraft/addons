@@ -1,0 +1,12 @@
+{
+  "@locale": "en",
+  "note.name": "Note",
+  "note.group": "Notes",
+  "note.cmd.help": "Place a numbered note bubble",
+  "note.cmd.where": "Where does the note go",
+  "note.cmd.text": "Note text",
+  "note.placed": "Note {n} placed.",
+  "note.section": "Note",
+  "note.field.n": "Number",
+  "note.field.text": "Text"
+}
