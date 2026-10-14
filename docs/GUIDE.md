@@ -66,6 +66,31 @@ Say `network` if your code talks to any server; review checks where to.
 | `api.data.get(e)`, `api.data.set(e, value)` | your own JSON on any object, kept in DWG and DXF |
 | `api.objects.define(kind, spec)` and `create`, `update`, `is`, `kindOf`, `dataOf`, `refresh` | objects of your own (below) |
 
+### MarkupCraft 1.0
+
+| Call | |
+|---|---|
+| `api.markups.list({sheet})`, `api.markups.get(id)` | copies of the markups |
+| `api.markups.change(label, (tx) => { tx.add({kind, rect / pts, data}); tx.update(id, patch); tx.remove(id); })` | one undo step; markups read from the file as read-only are never changed |
+| `api.markups.defineType(kind, {name, base, style, subject, version})` | a markup type of your own on one of MarkupCraft's (`cloudrect`, `rect`, `polyline`, `stamp`, …) |
+| `api.tools.start(kind, data)` | MarkupCraft's own tool for the base type; everything drawn with it is your type, carrying `data` |
+| `api.markups.is / kindOf / dataOf / data.get / data.set(m, value)` (→ the patch for `tx.update`), `api.markups.onChange(fn)` | |
+| `api.columns.add({id, label, value(m)})` | a column in the markups CSV and the summary workbook |
+| `api.ui.panelTab({id, title, render(el)})`, `api.sheets.current()`, `api.selection()`, `api.select(ids)`, `api.status(text)` | |
+
+Your types are saved as their base type's PDF annotation, so every PDF viewer shows them; your data rides in MarkupCraft's
+own data in the PDF. Opened without your add-on they are ordinary markups, and the data is saved back untouched.
+
+### TakeoffCraft 1.0
+
+| Call | |
+|---|---|
+| `api.items.defineType(kind, {name, type: 'linear' \| 'area' \| 'count', defaults: {unit, waste, heightFt, components: [{name, unit, formula}], conds}, data})` | an item type with its assembly; it is offered in the new-item form while your add-on is on |
+| `api.items.add(fields)`, `api.items.create(kind, over)`, `is / kindOf / dataOf / data.get / data.set(item, value)` | items, one undo step each call |
+| `api.export.column({id, label, value(row, item)})` | a column in the estimate CSV and XLSX |
+| `api.takeoff.state()`, `quantities()`, `estimate()`, `onChange(fn)`, `api.takeoff.model` | |
+| `api.ui.panelTab({id, title, render(el)})` | a section of your own in the right panel |
+
 Add-on file types appear in CadCraft's **IMPORT** and **EXPORT** commands. An importer's `read(file)` returns
 `{entities, blocks?, layers?}` (added to the drawing as one step) or `{drawing}` (opened as a new drawing).
 
@@ -108,6 +133,9 @@ export default async function (t) {
   t.ok(t.draw(note).some((e) => e.type === 'circle'), 'it draws a bubble');
 }
 ```
+
+An add-on whose first app is MarkupCraft or TakeoffCraft gets that app's stand-in instead of CadCraft's: `t.records()` (the
+markups or items it made), `t.column(id)` and `t.lastTool` (what `tools.start` picked).
 
 `t.exporter(id)` and `t.importer(id)` give you what you registered, so a test can call `write(t.doc)` or `read(file)` itself
 (`examples/outline/test/outline.test.mjs` checks its CSV that way).

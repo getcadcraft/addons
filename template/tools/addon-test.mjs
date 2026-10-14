@@ -16,6 +16,9 @@
  *      t.command(name, inputs) → the entities it added (inputs answer c.point / string / number / … in order)
  *      t.draw(e) · t.gripMove(e, key, to) → data · t.props(e) → Properties fields · t.text(key, vars) · t.doc
  *      t.exporter(id) / t.importer(id) → what it registered ({label, extension, write(doc)} / {…, read(file)})
+ *    An add-on for MarkupCraft or TakeoffCraft (its first app) gets that app's API instead of CadCraft's: markups / tools /
+ *    columns / sheets, or takeoff / items / export, and ui.panelTab — t.records() (the markups or items it made),
+ *    t.column(id), t.lastTool. Other apps get the shared API.
  * 4. Switches it off and checks everything it registered was taken away.
  * The stand-in is not CadCraft: test in the app too (load the folder in developer mode, docs/GUIDE.md § Try it in the app).
  */
@@ -91,7 +94,7 @@ const encode = (kind, version, data) => {
 };
 const decode = (items) => { try { if (!Array.isArray(items) || items[0][1] !== 'CCOBJ') return null; return { kind: items[1][1], version: items[2][1], data: JSON.parse(items.slice(4).map((x) => x[1]).join('')) }; } catch { return null; } };
 
-const reg = { commands: [], objects: [], toolbar: [], menu: [], panel: [], settings: [], props: [], importers: [], exporters: [], hooks: [] };
+const reg = { commands: [], objects: [], toolbar: [], menu: [], panel: [], settings: [], props: [], importers: [], exporters: [], hooks: [], types: [], columns: [] };
 const kinds = new Map(), commands = new Map(), propsDefs = new Map(), fileTypes = new Map();
 const cleanups = [];
 let nextId = 1;
@@ -167,6 +170,88 @@ const api = {
   get doc() { return doc; }, engine: null, print: (s) => { if (VERBOSE) console.log('  [print] ' + s); }, selection: () => [], select: () => {}, redraw: () => {},
 };
 
+// MarkupCraft and TakeoffCraft (their API 1.0 parts): a stand-in chosen by the add-on's first app
+const APP = m.apps[0];
+const typeSpecs = new Map(), columnSpecs = new Map();
+const clone = (v) => (v === undefined || v === null ? v ?? null : JSON.parse(JSON.stringify(v)));
+const xdOf = (r) => (r && r.xd && r.xd[m.id]) || null;
+const defType = (kind, spec, check) => {
+  if (!/^[a-z][a-z0-9-]{0,40}$/.test(kind)) throw new Error('defineType: kind "' + kind + '"');
+  check(spec);
+  if (typeSpecs.has(kind)) throw new Error('defineType: "' + kind + '" is already defined');
+  typeSpecs.set(kind, { ...clone(spec), version: Number.isInteger(spec.version) && spec.version > 0 ? spec.version : 1 });
+  listed(reg.types, kind); track(() => typeSpecs.delete(kind));
+  return () => typeSpecs.delete(kind);
+};
+const addColumn = (o, what) => {
+  if (!/^[a-z0-9][a-z0-9-]{0,40}$/.test(String(o.id)) || typeof o.value !== 'function') throw new Error(what + ': {id, label, value}');
+  columnSpecs.set(o.id, o); listed(reg.columns, o.id); track(() => columnSpecs.delete(o.id));
+  return () => columnSpecs.delete(o.id);
+};
+const recData = {
+  is: (r, kind = null) => { const x = xdOf(r); return !!x && x.kind !== '' && typeSpecs.has(x.kind) && (!kind || x.kind === kind); },
+  kindOf: (r) => { const x = xdOf(r); return x && x.kind ? x.kind : null; },
+  dataOf: (r) => { const x = xdOf(r); return x ? clone(x.data) : null; },
+};
+const panelTab = (o) => { listed(reg.panel, o.id); return null; };
+const records = [];   // markups or items
+let lastTool = null;  // MarkupCraft: what tools.start picked
+if (APP === 'markupcraft') {
+  const BASES = ['pen', 'highlight', 'line', 'arrow', 'arc', 'rect', 'ellipse', 'polyline', 'polygon', 'cloudrect', 'cloud', 'callout', 'text', 'note', 'stamp', 'measure', 'angle', 'area'];
+  const make = (f) => {
+    const out = { ...clone(f) }; delete out.kind; delete out.data;
+    if (f.kind !== undefined) { const s = typeSpecs.get(f.kind); if (!s) throw new Error('markups: type "' + f.kind + '" is not defined'); out.type = s.base; out.xd = { [m.id]: { kind: f.kind, v: s.version, data: clone(f.data ?? {}) } }; }
+    else if (f.data !== undefined) out.xd = { [m.id]: { kind: '', v: 1, data: clone(f.data) } };
+    if (!BASES.includes(out.type)) throw new Error('markups: type "' + out.type + '"');
+    return { id: 'm' + nextId++, sheet: 's1', author: 'Tester', status: 'Open', style: {}, text: '', ...out };
+  };
+  Object.assign(api, {
+    markups: {
+      list: () => clone(records), get: (id) => clone(records.find((r) => r.id === id) || null),
+      change(label, fn) {
+        return fn({
+          add: (f) => { const x = make(f); records.push(x); return clone(x); },
+          update: (id, patch) => { const i = records.findIndex((r) => r.id === id); if (i < 0) return null; records[i] = { ...records[i], ...clone(patch) }; return clone(records[i]); },
+          remove: (id) => { const i = records.findIndex((r) => r.id === id); if (i >= 0) records.splice(i, 1); },
+          get: (id) => clone(records.find((r) => r.id === id) || null),
+        });
+      },
+      onChange: (fn) => { listed(reg.hooks, fn); return () => {}; },
+      defineType: (kind, spec = {}) => defType(kind, spec, (s) => { if (!BASES.includes(s.base)) throw new Error('markups.defineType: base must be one of ' + BASES.join(', ')); }),
+      ...recData,
+      data: { get: recData.dataOf, set: (r, value) => { const x = xdOf(r); return { xd: { ...(r.xd || {}), [m.id]: { kind: x ? x.kind : '', v: x ? x.v : 1, data: clone(value) } } }; } },
+    },
+    tools: { start: (kind, data = {}) => { if (!typeSpecs.has(kind)) throw new Error('tools.start: type "' + kind + '" is not defined'); lastTool = { kind, base: typeSpecs.get(kind).base, data: clone(data) }; } },
+    columns: { add: (o) => addColumn(o, 'columns.add') },
+    sheets: { current: () => ({ key: 's1', title: 'A-101' }), list: () => [{ key: 's1', title: 'A-101' }] },
+    refresh: () => {}, status: () => {},
+  });
+  api.ui.panelTab = panelTab;
+} else if (APP === 'takeoffcraft') {
+  const TYPES = ['linear', 'area', 'count'];
+  const make = (f) => {
+    const out = { ...clone(f) }; delete out.kind; delete out.data;
+    if (f.kind !== undefined) { const s = typeSpecs.get(f.kind); if (!s) throw new Error('items: type "' + f.kind + '" is not defined'); Object.assign(out, { ...clone(s.defaults || {}), ...out, type: s.type, name: out.name || s.name }); out.xd = { [m.id]: { kind: f.kind, v: s.version, data: clone(f.data ?? s.data ?? {}) } }; }
+    else if (f.data !== undefined) out.xd = { [m.id]: { kind: '', v: 1, data: clone(f.data) } };
+    if (!TYPES.includes(out.type)) throw new Error('items: type "' + out.type + '"');
+    return { id: 'i' + nextId++, components: [], ...out };
+  };
+  Object.assign(api, {
+    takeoff: { model: null, state: () => ({ items: clone(records), marks: [] }), quantities: () => ({}), estimate: () => ({ rows: [] }), onChange: (fn) => { listed(reg.hooks, fn); return () => {}; } },
+    items: {
+      defineType: (kind, spec = {}) => defType(kind, spec, (s) => { if (!TYPES.includes(s.type)) throw new Error('items.defineType: type must be one of ' + TYPES.join(', ')); }),
+      add: (list) => (Array.isArray(list) ? list : [list]).map((f) => { const x = make(f); records.push(x); return x.id; }),
+      create: (kind, over = {}) => { const x = make({ ...over, kind }); records.push(x); return x.id; },
+      ...recData,
+      data: { get: recData.dataOf, set: (r, value) => { const i = records.findIndex((x) => x.id === r.id); if (i < 0) return false; const x = xdOf(records[i]); records[i] = { ...records[i], xd: { ...(records[i].xd || {}), [m.id]: { kind: x ? x.kind : '', v: x ? x.v : 1, data: clone(value) } } }; return true; } },
+    },
+    export: { column: (o) => addColumn(o, 'export.column') },
+    status: () => {},
+  });
+  api.ui.panelTab = panelTab;
+}
+if (APP !== 'cadcraft') for (const k of ['commands', 'toolbar', 'props', 'drawing', 'data', 'objects', 'doc', 'engine', 'print', 'redraw']) delete api[k];
+
 // ------------------------------------------------------------------------------------------------ 3. activate, the add-on's tests
 section('Activate');
 let mod, ret;
@@ -195,6 +280,9 @@ const t = {
   },
   draw(e) { const d = decode(e?.xd?.[appid]); return kinds.get(d.kind).draw(structuredClone(d.data), { kind: d.kind }); },
   gripMove(e, key, to) { const d = decode(e?.xd?.[appid]); return kinds.get(d.kind).gripMove(structuredClone(d.data), key, to); },
+  records: () => clone(records),                                 // MarkupCraft: the markups; TakeoffCraft: the items
+  column: (id) => columnSpecs.get(id) ?? null,                   // an add-on column: {id, label, value}
+  get lastTool() { return lastTool; },                           // MarkupCraft: what tools.start picked {kind, base, data}
   exporter: (id) => fileTypes.get('out:' + id) ?? null,
   importer: (id) => fileTypes.get('in:' + id) ?? null,
   props(e) { const out = []; for (const s of propsDefs.values()) if (!s.types || s.types.includes(e.type)) out.push(...(s.defs([e], {}) || [])); return out; },
