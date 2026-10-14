@@ -13,6 +13,11 @@ Add-ons are features you can switch on or off in the [CadCraft](https://getcadcr
   testing, packing, review and signing.
 - `template/`: a small working add-on (numbered note bubbles in CadCraft) to copy, with its own tests,
   `npm test` (a stand-in for the app, no dependencies) and `npm run pack` (the zip you upload).
+- `examples/outline/`: a small, complete example for 2D work: a closed outline that carries a tag, with a grip on every
+  corner, the tag in the Properties panel, area and perimeter, and an exporter (CSV). It saves in DWG and DXF with nothing
+  extra to write. Start here for cutting, sign-making or space-planning add-ons. Same `npm test` and `npm run pack`.
+
+`tools/` is the same in the template and in each example.
 
 ## Start
 

@@ -1,0 +1,12 @@
+{
+  "name": "cadcraft-addon-outline",
+  "private": true,
+  "type": "module",
+  "description": "An example CadCraft add-on: tagged outlines.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "node tools/addon-test.mjs",
+    "pack": "node tools/addon-pack.mjs"
+  },
+  "engines": { "node": ">=20" }
+}

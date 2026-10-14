@@ -1,0 +1,13 @@
+{
+  "id": "com.example.outline",
+  "name": "Outline",
+  "version": "0.1.0",
+  "apps": ["cadcraft"],
+  "api": "1.0",
+  "license": "Apache-2.0",
+  "entry": "./main.js",
+  "permissions": ["commands", "toolbar", "objects", "files"],
+  "description": "Closed outlines that carry a tag, with their area and perimeter, exported as CSV. An example to start a 2D add-on from.",
+  "author": "Your name",
+  "lang": "./lang/"
+}

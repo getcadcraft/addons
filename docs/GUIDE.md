@@ -71,6 +71,10 @@ Add-on file types appear in CadCraft's **IMPORT** and **EXPORT** commands. An im
 
 ## Objects of your own
 
+`template/` places numbered notes; `examples/outline/` is a fuller one for 2D work (corner grips, a Properties field, read-only
+values, a command that converts an existing polyline in one undo step, an exporter). The add-ons CadCraft itself ships,
+such as Electrical, are built on the same API and are in the CadCraft app's own repository under `app/addons/`.
+
 ```js
 api.objects.define('note', {
   version: 1,                       // your data's version
@@ -105,6 +109,9 @@ export default async function (t) {
 }
 ```
 
+`t.exporter(id)` and `t.importer(id)` give you what you registered, so a test can call `write(t.doc)` or `read(file)` itself
+(`examples/outline/test/outline.test.mjs` checks its CSV that way).
+
 The stand-in is not CadCraft. Try your add-on in the app before you upload it, in developer mode: in the browser's console on
 CadCraft's page run `localStorage.setItem('cc-addons-dev', '1')`, then install your files with
 `await ccAddons.installPackage({ manifest, files: { 'addon.json': '…', 'main.js': '…', … } })` and reload. An unsigned package
@@ -114,15 +121,20 @@ There is no button for this yet.
 ## Packing, review and signing
 
 `npm run pack` writes `<id>-<version>.zip` (no `test/`, `tools/`, `node_modules/`). Upload it at
-getcadcraft.com/addons/upload. The directory checks it (the manifest, the license, the files, imports outside the add-on) and
-the CadCraft team reads the code. An approved version is signed with getcadcraft.com's key and listed; the apps install and
-load only signed packages, and check the signature again every time they start, so a changed file is refused.
+getcadcraft.com/addons/upload, signed in with a verified CadCraft account, and confirm that you wrote it or may publish it
+under its license. The directory checks it (the manifest, the license, the files, imports outside the add-on) and the CadCraft
+team reads the code: what review checks and how long it takes is at getcadcraft.com/addons/review. You get an email when a
+version is decided; a version that is not approved comes with a note saying why. An approved version is signed with
+getcadcraft.com's key and listed under your account's name, with an author page of its own. The apps install and load only
+signed packages, and check the signature again every time they start, so a changed file is refused.
+
+Add-ons in the directory are free. Your id is yours once your first upload is in: nobody else can upload under it.
 
 A published version never changes: a fix is a new version.
 
 ## Not built yet
 
-- Uploads from outside the CadCraft team (the directory takes them later).
+- Uploads from outside the CadCraft team: built, and switched on when the directory opens to the public.
 - Installing from the directory into the desktop app.
 - A help compiler you can run yourself: put your topics in `help/*.md`; review compiles them for now.
 - Scripts (CraftScript, Lua) as add-ons, and add-on commands as tools for AI assistants.

@@ -15,6 +15,7 @@
  *      t.ok(cond, name) · t.api (what the add-on got) · t.registered {commands, objects, toolbar, menu, props, importers, exporters}
  *      t.command(name, inputs) → the entities it added (inputs answer c.point / string / number / … in order)
  *      t.draw(e) · t.gripMove(e, key, to) → data · t.props(e) → Properties fields · t.text(key, vars) · t.doc
+ *      t.exporter(id) / t.importer(id) → what it registered ({label, extension, write(doc)} / {…, read(file)})
  * 4. Switches it off and checks everything it registered was taken away.
  * The stand-in is not CadCraft: test in the app too (load the folder in developer mode, docs/GUIDE.md § Try it in the app).
  */
@@ -91,7 +92,7 @@ const encode = (kind, version, data) => {
 const decode = (items) => { try { if (!Array.isArray(items) || items[0][1] !== 'CCOBJ') return null; return { kind: items[1][1], version: items[2][1], data: JSON.parse(items.slice(4).map((x) => x[1]).join('')) }; } catch { return null; } };
 
 const reg = { commands: [], objects: [], toolbar: [], menu: [], panel: [], settings: [], props: [], importers: [], exporters: [], hooks: [] };
-const kinds = new Map(), commands = new Map(), propsDefs = new Map();
+const kinds = new Map(), commands = new Map(), propsDefs = new Map(), fileTypes = new Map();
 const cleanups = [];
 let nextId = 1;
 const doc = {
@@ -116,8 +117,8 @@ const api = {
     settingsSection: (o) => { listed(reg.settings, o.id); return null; },
   },
   files: {
-    importer: (o) => { if (typeof o.read !== 'function') throw new Error('importer: read()'); listed(reg.importers, o.id); return o; },
-    exporter: (o) => { if (typeof o.write !== 'function') throw new Error('exporter: write()'); listed(reg.exporters, o.id); return o; },
+    importer: (o) => { if (typeof o.read !== 'function') throw new Error('importer: read()'); listed(reg.importers, o.id); fileTypes.set('in:' + o.id, o); track(() => fileTypes.delete('in:' + o.id)); return o; },
+    exporter: (o) => { if (typeof o.write !== 'function') throw new Error('exporter: write()'); listed(reg.exporters, o.id); fileTypes.set('out:' + o.id, o); track(() => fileTypes.delete('out:' + o.id)); return o; },
   },
   commands: {
     add(name, aliases, fn, extra = {}) {
@@ -194,6 +195,8 @@ const t = {
   },
   draw(e) { const d = decode(e?.xd?.[appid]); return kinds.get(d.kind).draw(structuredClone(d.data), { kind: d.kind }); },
   gripMove(e, key, to) { const d = decode(e?.xd?.[appid]); return kinds.get(d.kind).gripMove(structuredClone(d.data), key, to); },
+  exporter: (id) => fileTypes.get('out:' + id) ?? null,
+  importer: (id) => fileTypes.get('in:' + id) ?? null,
   props(e) { const out = []; for (const s of propsDefs.values()) if (!s.types || s.types.includes(e.type)) out.push(...(s.defs([e], {}) || [])); return out; },
 };
 const testDir = path.join(DIR, 'test');
