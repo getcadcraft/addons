@@ -20,6 +20,16 @@ Contents: [How CadCraft uses your layout file](#how-cadcraft-uses-your-layout-fi
 [Naming](#naming) · [Packing it as an add-on](#packing-it-as-an-add-on) · [Review](#review) ·
 [What a layout cannot do](#what-a-layout-cannot-do-and-how-to-propose-a-new-block)
 
+## Start in the app: Arrange your own layout
+
+You don't have to write the file by hand. In any app, **Settings › Global › Layout › Arrange your own layout…** lets you choose which panel holds
+which palettes, where the toolbox goes, a ribbon or the toolbar, what the info box, quick bar and view bar hold, the view tabs, the edit palette
+and the look; it offers only the blocks that app can fill. **Use this layout** saves it as your own layout file (`my-<name>`), and **Export this
+layout** writes it out as a `.ccworkspace.json` you can edit, test and pack as an add-on with the steps below.
+
+A layout arranges the blocks; a **work environment** (Settings › Global › Layout › Work environments, `.ccenv.json`) is a person's whole setup —
+the layout chosen, menu style and keys, toolbar style, panels, My tools — and is not an add-on kind.
+
 ## How CadCraft uses your layout file
 
 ```
