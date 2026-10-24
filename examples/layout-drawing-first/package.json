@@ -1,0 +1,12 @@
+{
+  "name": "cadcraft-layout-drawing-first",
+  "private": true,
+  "type": "module",
+  "description": "An example CadCraft workspace layout (add-on kind workspace): Drawing first.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "node tools/layout-test.mjs && node --test test/*.test.mjs",
+    "pack": "node tools/layout-pack.mjs"
+  },
+  "engines": { "node": ">=20" }
+}

@@ -1,0 +1,14 @@
+{
+  "format": "cadcraft-workspace-addons",
+  "version": 1,
+  "addons": [
+    {
+      "id": "drawing-first",
+      "file": "drawing-first.ccworkspace.json",
+      "name": "Drawing first",
+      "description": "The ribbon folded to its tabs, the palettes on the right, the view tabs at the bottom: the most room for the drawing.",
+      "author": "CadCraft",
+      "license": "CC0-1.0"
+    }
+  ]
+}

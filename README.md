@@ -17,7 +17,11 @@ Add-ons are features you can switch on or off in the [CadCraft](https://getcadcr
   corner, the tag in the Properties panel, area and perimeter, and an exporter (CSV). It saves in DWG and DXF with nothing
   extra to write. Start here for cutting, sign-making or space-planning add-ons. Same `npm test` and `npm run pack`.
 
-`tools/` is the same in the template and in each example.
+- `docs/LAYOUTS.md`: **make your own workspace layout** — a data-only add-on of kind `workspace` (`<name>.ccworkspace.json`) that arranges
+  the apps' building blocks (ribbon, toolbox, info box, palettes, view tabs…) in every app; `examples/layout-drawing-first/` is one, with
+  its test.
+
+`tools/` is the same in the template and in each code example (the layout example has its own, smaller tools).
 
 ## Start
 

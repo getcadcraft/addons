@@ -1,0 +1,18 @@
+{
+  "format": "cadcraft-workspace",
+  "version": 1,
+  "id": "drawing-first",
+  "name": "Drawing first",
+  "description": "As much room for the drawing as the screen allows: the ribbon starts folded to its tabs, the palettes sit in the right panel, the view tabs run along the bottom.",
+  "author": "CadCraft",
+  "license": "CC0-1.0",
+  "look": { "density": "compact", "outline": "none", "tabs": "underline" },
+  "blocks": [
+    { "block": "ribbon", "place": "top", "order": 0, "file": ["open", "save"], "collapse": true, "collapsed": true, "tearOff": true },
+    { "block": "options", "place": "top", "order": 1, "commands": ["clear"] },
+    { "block": "toolbar", "place": "none" },
+    { "block": "palettes", "place": "right-panel", "upper": "properties", "lower": ["browser", "panel"] },
+    { "block": "viewtabs", "place": "view-bottom", "order": 0, "mode": "all" },
+    { "block": "statusbar", "place": "bottom", "order": 0 }
+  ]
+}

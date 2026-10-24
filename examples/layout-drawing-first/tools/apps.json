@@ -1,0 +1,9 @@
+{
+  "@about": "What each app's workspace adapter offers (the blocks it can fill, its slots, its palettes, the actions it runs), for checking a layout without the app. From the CadCraft 0.7 lab; the other apps get their adapters in 0.7 (WS.8-WS.14) and are added here as they land.",
+  "bimcraft": {
+    "ribbon": true, "toolbox": true, "views": true, "toolbar": true,
+    "slots": ["level", "document", "layout", "units", "scale", "detail", "range", "fit"],
+    "palettes": ["properties", "browser"],
+    "actions": ["open", "save", "undo", "redo", "select", "clear", "fit"]
+  }
+}
